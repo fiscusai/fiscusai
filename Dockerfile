@@ -19,7 +19,8 @@ RUN python -m pip install --upgrade pip && \
 COPY . .
 
 # 3) (Opsiyonel) import kolaylığı
+# ... (üst kısım aynı)
 ENV PYTHONPATH=/app
 
-# (Dockerfile'ın sonunda)
 CMD ["sh", "-c", "gunicorn -k uvicorn.workers.UvicornWorker server:app --bind 0.0.0.0:${PORT:-8000} --log-level info"]
+
