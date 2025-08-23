@@ -21,5 +21,5 @@ COPY . .
 # 3) (Opsiyonel) import kolaylığı
 ENV PYTHONPATH=/app
 
-# 4) Giriş noktası — PORT'u Render verecek
-CMD ["gunicorn","-k","uvicorn.workers.UvicornWorker","server:app","--bind","0.0.0.0:${PORT}","--log-level","info"]
+# (Dockerfile'ın sonunda)
+CMD ["sh", "-c", "gunicorn -k uvicorn.workers.UvicornWorker server:app --bind 0.0.0.0:${PORT:-8000} --log-level info"]

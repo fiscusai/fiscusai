@@ -10,7 +10,6 @@ services:
           type: redis
           name: fiscus-ai-redis
           property: connectionString
-
   - type: redis
     name: fiscus-ai-redis
     ipAllowList: []
