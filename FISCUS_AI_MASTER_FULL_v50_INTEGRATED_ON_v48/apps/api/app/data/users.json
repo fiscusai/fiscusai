@@ -1,0 +1,18 @@
+{
+  "1": {
+    "id": "1",
+    "email": "admin@fiscus.ai",
+    "password_hash": "",
+    "role": "admin",
+    "enabled": true,
+    "email_verified": true
+  },
+  "2": {
+    "id": "2",
+    "email": "user@fiscus.ai",
+    "password_hash": "",
+    "role": "user",
+    "enabled": true,
+    "email_verified": false
+  }
+}

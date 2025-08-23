@@ -1,0 +1,6 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" fill="#2D2D2D"/>
+  <circle cx="128" cy="128" r="84" fill="none" stroke="#C9A54A" stroke-width="8"/>
+  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-size="88" fill="#C9A54A" font-family="Cinzel, serif">F</text>
+  <path d="M60,200 C100,170 156,170 196,200" stroke="#6E6B5E" stroke-width="4" fill="none"/> <!-- laurel hint -->
+</svg>

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "T-1",
+    "date": "2025-08-01",
+    "desc": "Aurea \u00f6deme",
+    "amount": 1230.0,
+    "matched_invoice": null
+  },
+  {
+    "id": "T-2",
+    "date": "2025-08-02",
+    "desc": "Legera tahsilat",
+    "amount": 2450.0,
+    "matched_invoice": null
+  },
+  {
+    "id": "T-3",
+    "date": "2025-08-03",
+    "desc": "Banka \u00fccret",
+    "amount": -15.0,
+    "matched_invoice": null
+  },
+  {
+    "id": "T-4",
+    "date": "2025-08-05",
+    "desc": "POS tahsilat",
+    "amount": 780.0,
+    "matched_invoice": null
+  }
+]

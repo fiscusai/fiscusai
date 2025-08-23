@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fiscus-app
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/enable-modsecurity: "true"
+    nginx.ingress.kubernetes.io/modsecurity-snippet: |
+      SecRuleEngine On
+      SecRequestBodyAccess On
+      SecRule ARGS|ARGS_NAMES|REQUEST_HEADERS "(<|%3C)script" "id:1001,phase:2,deny,status:403,msg:'XSS detected'"
+spec:
+  rules:
+    - host: app.fiscus.local
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: fiscus-web
+              port:
+                number: 3000

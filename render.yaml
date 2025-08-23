@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: fiscus-ai-web
+    runtime: docker
+    plan: free
+    region: frankfurt
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: fiscus-ai-redis
+          property: connectionString
+
+  - type: redis
+    name: fiscus-ai-redis
+    ipAllowList: []
+    plan: free

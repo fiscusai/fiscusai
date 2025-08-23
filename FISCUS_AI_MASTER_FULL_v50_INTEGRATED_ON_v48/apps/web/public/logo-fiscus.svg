@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="48" viewBox="0 0 240 48">
+  <defs>
+    <style>
+      .a{font-family:Cinzel,serif;font-size:28px;letter-spacing:6px;fill:#C9A54A}
+      .w{fill:#2D2D2D}
+    </style>
+  </defs>
+  <g>
+    <circle cx="24" cy="24" r="20" class="w" />
+    <path d="M24 6 a18 18 0 1 0 0.0001 0" fill="none" stroke="#C9A54A" stroke-width="2"/>
+    <text x="56" y="32" class="a">FISCUS AI</text>
+  </g>
+</svg>

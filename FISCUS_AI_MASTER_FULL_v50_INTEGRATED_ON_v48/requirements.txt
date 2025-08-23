@@ -1,0 +1,43 @@
+# === Core API ===
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+python-multipart
+email-validator
+passlib[bcrypt]
+itsdangerous
+# === DB ===
+sqlalchemy
+sqlmodel
+alembic
+psycopg2-binary
+# === Queue / Cache ===
+redis
+rq
+apscheduler
+# === S3 / Files ===
+boto3
+botocore
+# === Utils ===
+jinja2
+lxml
+numpy
+pandas
+openpyxl
+reportlab
+pyotp
+PyJWT
+sentry-sdk
+# === Security / Scanning ===
+clamd
+# === Tooling ===
+cyclonedx-bom
+pip-licenses
+prometheus-client
+pyotp
+itsdangerous
+reportlab
+pytest
+httpx
+requests

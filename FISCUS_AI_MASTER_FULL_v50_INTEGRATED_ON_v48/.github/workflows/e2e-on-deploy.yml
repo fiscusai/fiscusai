@@ -1,0 +1,22 @@
+name: e2e-on-deploy
+on:
+  workflow_dispatch: {}
+  workflow_run:
+    workflows: ["deploy"]
+    types: [completed]
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install deps
+        run: |
+          cd apps/web
+          npm ci
+          npx playwright install --with-deps
+      - name: Run smoke
+        run: |
+          cd apps/web
+          npm run test:e2e

@@ -1,0 +1,14 @@
+{
+  "name": "fiscus-ai-monorepo",
+  "private": true,
+  "version": "1.1.0",
+  "workspaces": [
+    "apps/web",
+    "apps/api"
+  ],
+  "scripts": {
+    "dev:api": "uvicorn apps.api.app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "lint:api": "ruff check apps/api/app",
+    "fmt:api": "ruff format apps/api/app"
+  }
+}

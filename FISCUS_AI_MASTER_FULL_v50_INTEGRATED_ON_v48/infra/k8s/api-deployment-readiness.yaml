@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fiscus-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          image: fiscus/api:latest
+          ports: [{containerPort: 8000}]
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health/deep, port: 8000 }
+            initialDelaySeconds: 20
+            periodSeconds: 20

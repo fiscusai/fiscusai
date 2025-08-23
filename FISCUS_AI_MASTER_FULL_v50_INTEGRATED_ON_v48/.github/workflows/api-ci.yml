@@ -1,0 +1,60 @@
+name: API CI
+
+on:
+  push:
+    paths:
+      - 'apps/api/**'
+      - '.github/workflows/api-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/api/**'
+      - '.github/workflows/api-ci.yml'
+
+jobs:
+  api-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Import check
+        working-directory: apps/api
+        run: python - <<'PY'
+import importlib
+m=importlib.import_module('app.main');print('Imported:', m.app.title)
+PY
+
+      - name: FastAPI testclient smoke
+        run: |
+          python - <<'PY'
+from fastapi.testclient import TestClient
+from apps.api.app.main import app
+c=TestClient(app)
+r=c.get('/live');assert r.status_code==200
+PY
+
+- name: Alembic upgrade (sqlite)
+  working-directory: apps/api/app
+  env:
+    DATABASE_URL: sqlite:///./test.db
+  run: |
+    python -m alembic -c alembic.ini upgrade head
+
+
+- name: API unit tests
+  env:
+    PYTHONPATH: .
+    JWT_SECRET: change-me
+  run: |
+    python -m pip install pytest
+    pytest -q

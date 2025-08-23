@@ -1,0 +1,20 @@
+{
+  "Rules": [
+    {
+      "ID": "expire-logs",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": "logs/"
+      },
+      "Expiration": {
+        "Days": 30
+      },
+      "Transitions": [
+        {
+          "Days": 7,
+          "StorageClass": "STANDARD_IA"
+        }
+      ]
+    }
+  ]
+}

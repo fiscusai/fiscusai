@@ -1,0 +1,20 @@
+[
+  {
+    "id": "TX-001",
+    "date": "2025-08-01",
+    "amount": 1500.0,
+    "desc": "POS Tahsilat"
+  },
+  {
+    "id": "TX-002",
+    "date": "2025-08-03",
+    "amount": 980.0,
+    "desc": "Havale"
+  },
+  {
+    "id": "TX-003",
+    "date": "2025-08-06",
+    "amount": 2450.0,
+    "desc": "EFT"
+  }
+]

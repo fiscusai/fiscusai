@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Running pre-commit hooks..."
+cd apps/web && npx lint-staged
+cd - >/dev/null 2>&1
+python -m ruff check .

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: fiscus-api
+    env: docker
+    rootDir: apps/api
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://fiscus.ai,https://www.fiscus.ai

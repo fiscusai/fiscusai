@@ -1,0 +1,25 @@
+name: Security Scan
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: SBOM & Licenses
+        run: |
+          pip install cyclonedx-bom pip-licenses
+          cyclonedx-bom -o sbom.json
+          pip-licenses --format=json --output-file=thirdparty-licenses.json
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-and-licenses
+          path: |
+            sbom.json
+            thirdparty-licenses.json

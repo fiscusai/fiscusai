@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Ruff (lint)
+        run: ruff check .
+      - name: Pytest (API)
+        working-directory: apps/api
+        run: pytest
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Web deps
+        working-directory: apps/web
+        run: npm ci || npm install
+      - name: ESLint (Web)
+        working-directory: apps/web
+        run: npm run lint
+      - name: Build Web
+        working-directory: apps/web
+        run: npm run build
+
+
+e2e-web:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install deps
+      working-directory: apps/web
+      run: npm ci || npm install
+    - name: Install Playwright Browsers
+      working-directory: apps/web
+      run: npx playwright install --with-deps
+    - name: Run E2E
+      working-directory: apps/web
+      run: npm run test:e2e

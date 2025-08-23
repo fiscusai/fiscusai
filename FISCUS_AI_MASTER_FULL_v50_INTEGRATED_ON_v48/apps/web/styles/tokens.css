@@ -1,0 +1,13 @@
+:root{
+  --gold:#C9A54A;
+  --marble:#F2F2F0;
+  --imperial-red:#7A1F1F;
+  --anthracite:#2D2D2D;
+  --olive-gray:#6E6B5E;
+  --radius:12px;
+  --shadow:0 10px 20px rgba(0,0,0,.08);
+}
+.golden-card{ border:1px solid var(--gold); border-radius: var(--radius); box-shadow: var(--shadow); }
+.hero-overlay{ background: radial-gradient(ellipse at center, rgba(201,165,74,.18), transparent 60%); }
+.gold-btn{ border:1px solid var(--gold); padding:.6rem 1rem; border-radius: 8px; }
+.gold-btn:hover{ box-shadow: var(--shadow); transform: translateY(-1px); transition: all .15s ease; }

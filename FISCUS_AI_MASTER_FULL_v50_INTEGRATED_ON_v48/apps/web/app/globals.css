@@ -1,0 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+:root{ --fiscus-mermer:#F2F2F0; --fiscus-altin:#C9A54A; --fiscus-kirmizi:#7A1F1F; --fiscus-antrasit:#2D2D2D; --fiscus-zeytin:#6E6B5E; }
+html,body{ height:100%; background:#F2F2F0; color:#2D2D2D; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif }
+.font-display{ font-family:Cinzel, serif; letter-spacing:.3px }
+.btn-gold{ border:1px solid var(--fiscus-altin); box-shadow:inset 0 2px 0 rgba(201,165,74,.6) }
+.cookie-banner{ position:fixed; bottom:1rem; left:1rem; right:1rem; background:white; border:1px solid #C9A54A; padding:1rem; border-radius:8px; box-shadow:0 6px 16px rgba(0,0,0,.08); }

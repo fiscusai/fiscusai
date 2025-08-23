@@ -1,0 +1,79 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: fiscus
+      POSTGRES_PASSWORD: fiscus
+      POSTGRES_DB: fiscus
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+  clamav:
+    image: clamav/clamav:latest
+    restart: unless-stopped
+    ports:
+      - "3310:3310"
+    healthcheck:
+      test: ["CMD", "clamdscan", "-V"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://fiscus:fiscus@db:5432/fiscus
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_BUCKET: fiscus-dev
+      S3_USE_PATH_STYLE: "1"
+      CORS_ALLOW_ORIGINS: http://web:3000,http://localhost:3000,*
+    depends_on:
+      - db
+      - minio
+      - redis
+      - clamav
+    ports:
+      - "8000:8000"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    command: ["npm", "run", "dev"]
+
+volumes:
+  pgdata:
+  minio_data:

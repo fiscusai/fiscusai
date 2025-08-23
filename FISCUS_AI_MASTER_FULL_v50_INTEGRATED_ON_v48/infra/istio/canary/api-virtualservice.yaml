@@ -1,0 +1,25 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: fiscus-api
+spec:
+  hosts: ["api.fiscus.local"]
+  gateways: ["fiscus-gateway"]
+  http:
+  - route:
+    - destination: { host: fiscus-api, subset: stable }
+      weight: 90
+    - destination: { host: fiscus-api, subset: canary }
+      weight: 10
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: fiscus-api
+spec:
+  host: fiscus-api
+  subsets:
+  - name: stable
+    labels: { track: stable }
+  - name: canary
+    labels: { track: canary }

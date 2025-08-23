@@ -1,0 +1,26 @@
+name: Deploy
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Install API deps
+        run: |
+          pip install -r apps/api/requirements.txt
+      - name: Build Web
+        run: |
+          cd apps/web && npm ci && npm run build
+      - name: Run Smoke Tests
+        run: |
+          cd apps/web && npx playwright install --with-deps && npm run test:e2e
+      - name: Deploy (placeholder)
+        run: echo "Deploy to prod environment here (SSH/K8s/Cloud)"
