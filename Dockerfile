@@ -8,19 +8,14 @@ RUN apt-get update && apt-get install -y \
     ffmpeg libsm6 libxext6 libgl1 build-essential && \
     rm -rf /var/lib/apt/lists/*
 
+# ... (üst kısım aynı)
 WORKDIR /app
-
-# 1) Gereksinimler
-COPY requirements.txt ./requirements.txt
-RUN python -m pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# 2) Uygulama
+# ...
 COPY . .
 
-# 3) (Opsiyonel) import kolaylığı
-# ... (üst kısım aynı)
-ENV PYTHONPATH=/app
+# *** BURAYI GÜNCELLE ***
+# Hem kökü (/app), hem proje kökünü, hem de apps/api'yi ekliyoruz
+ENV PYTHONPATH=/app:/app/FISCUS_AI_MASTER_FULL_v50_INTEGRATED_ON_v48:/app/FISCUS_AI_MASTER_FULL_v50_INTEGRATED_ON_v48/apps/api
 
-CMD ["sh", "-c", "gunicorn -k uvicorn.workers.UvicornWorker server:app --bind 0.0.0.0:${PORT:-8000} --log-level info"]
+CMD ["sh","-c","gunicorn -k uvicorn.workers.UvicornWorker server:app --bind 0.0.0.0:${PORT:-8000} --log-level info"]
 
