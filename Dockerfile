@@ -1,19 +1,25 @@
 # syntax=docker/dockerfile:1
-FROM python:3.11-alpine AS base
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-RUN apk add --no-cache build-base
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# OpenCV/torch vs. için sistem paketleri
+RUN apt-get update && apt-get install -y \
+    ffmpeg libsm6 libxext6 libgl1 build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Install deps
-COPY ../../requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+# 1) Gereksinimler
+COPY requirements.txt ./requirements.txt
+RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copy app
-COPY ./app /app/app
+# 2) Uygulama
+COPY . .
 
-# Create non-root user
-RUN addgroup -S app && adduser -S app -G app
-USER app
+# 3) (Opsiyonel) import kolaylığı
+ENV PYTHONPATH=/app
 
-EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 4) Giriş noktası — PORT'u Render verecek
+CMD ["gunicorn","-k","uvicorn.workers.UvicornWorker","server:app","--bind","0.0.0.0:${PORT}","--log-level","info"]
