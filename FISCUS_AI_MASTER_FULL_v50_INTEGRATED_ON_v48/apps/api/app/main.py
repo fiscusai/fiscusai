@@ -1,17 +1,17 @@
 from fastapi import FastAPI
-from app.routers import reports_export
-from app.routers import auth_lifecycle
 from fastapi.middleware.cors import CORSMiddleware
 from importlib import import_module
-from app.metrics import PrometheusMiddleware, metrics
 import pkgutil
 import os
-from app.security.middleware import AuthContextMiddleware
-from app.security.headers import SecurityHeadersMiddleware
 
-# Optional middlewares
+# --- App içi relative importlar (absolute 'from app...' yerine) ---
+from .metrics import PrometheusMiddleware, metrics, instrument, router as metrics_router
+from .security.middleware import AuthContextMiddleware
+from .security.headers import SecurityHeadersMiddleware
+
+# İsteğe bağlı rate limit middleware (varsa)
 try:
-    from app.security.rate_limit import RateLimitMiddleware  # type: ignore
+    from .security.rate_limit import RateLimitMiddleware  # type: ignore
 except Exception:  # pragma: no cover
     RateLimitMiddleware = None  # type: ignore
 
@@ -24,41 +24,70 @@ try:
 except Exception:
     pass
 
-app = FastAPI
-app.add_middleware(CORSMiddleware, allow_origins=['http://localhost:3000','http://127.0.0.1:3000'], allow_credentials=True, allow_methods=['*'], allow_headers=['*'])(title="FISCUS AI API", version=os.getenv("APP_VERSION", "0.1.0"))
+# === FastAPI app ===
+app = FastAPI(title="FISCUS AI API", version=os.getenv("APP_VERSION", "0.1.0"))
+
+# --- Middlewares ---
+# Güvenlik başlıkları
 app.add_middleware(SecurityHeadersMiddleware)
+
+# Rate limit (varsa)
 if RateLimitMiddleware:
     app.add_middleware(RateLimitMiddleware)
+
+# Auth context
 app.add_middleware(AuthContextMiddleware)
+
+# Prometheus
 app.add_middleware(PrometheusMiddleware)
 
-# CORS
-allow_origins = os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")
+# CORS (ENV üzerinden liste al)
+allow_origins = os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allow_origins,
+    allow_origins=[o.strip() for o in allow_origins if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Rate limit (if available)
-if RateLimitMiddleware:
-    app.add_middleware(RateLimitMiddleware)
-
-# Health endpoint
+# --- Health endpoints ---
 @app.get("/health")
 def health():
     return {"ok": True}
 
-# Auto-discover and register routers from app.routers.* modules
+@app.get("/live")
+def live():
+    return {"ok": True}
+
+@app.get("/ready")
+def ready():
+    try:
+        from .utils_health import health_snapshot  # relative import
+        snap = health_snapshot()
+        is_ready = (snap.get("db") == "up" and snap.get("s3") in ("up", "unknown"))
+        return {"ready": is_ready, **snap}
+    except Exception:
+        # utils_health yoksa en azından "up" ver
+        return {"ready": True}
+
+# --- Prometheus metrics ---
+@app.get("/metrics")
+async def metrics_route(request):
+    return await metrics(request)
+
+# --- (Opsiyonel) debug sentry ---
+@app.get("/debug-sentry")
+def debug_sentry():
+    raise RuntimeError("Sentry test: deliberate error")
+
+# --- Router auto-discovery: .routers altındaki tüm modülleri tara ---
 def _include_all_routers():
-    pkg_name = "app.routers"
+    pkg_name = __package__ + ".routers"  # "app.routers"
     try:
         pkg = import_module(pkg_name)
-    except Exception as e:  # pragma: no cover
+    except Exception:
         return
-
     for modinfo in pkgutil.iter_modules(pkg.__path__):  # type: ignore[attr-defined]
         name = modinfo.name
         if name.startswith("_"):
@@ -69,80 +98,19 @@ def _include_all_routers():
             if router is not None:
                 app.include_router(router)
         except Exception:
-            # If a router fails to import, skip it to keep API booting
+            # Router importu patlarsa API boot etmeye devam etsin
             continue
 
 _include_all_routers()
+
+# --- Metrics helper (opsiyonel) ---
+try:
+    instrument(app)
+    app.include_router(metrics_router)
+except Exception:
+    pass
 
 # Root
 @app.get("/")
 def root():
     return {"service": "FISCUS AI API"}
-
-@app.get("/live")
-def live():
-    return {"ok": True}
-
-@app.get("/ready")
-def ready():
-    from app.utils_health import health_snapshot
-    snap = health_snapshot()
-    ready = (snap.get("db") == "up" and snap.get("s3") in ("up","unknown"))
-    return {"ready": ready, **snap}
-
-
-@app.get('/metrics')
-async def metrics_route(request):
-    return await metrics(request)
-
-
-@app.get("/debug-sentry")
-def debug_sentry():
-    # Bu endpoint, Sentry yakalamasını test etmek için kasıtlı bir hata fırlatır.
-    raise RuntimeError("Sentry test: deliberate error")
-
-app.include_router(admin.router)
-
-app.include_router(admin_audit.router)
-
-app.include_router(admin_users.router)
-
-app.include_router(auth_lifecycle.router)
-
-app.include_router(reports_export.router)
-
-from app.routers import auth
-app.include_router(auth.router)
-
-
-from fastapi.middleware.cors import CORSMiddleware
-from app.metrics import instrument, router as metrics_router
-
-try:
-    app
-except NameError:
-    from fastapi import FastAPI
-    app = FastAPI(title="FISCUS AI API")
-
-# CORS for dev
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173","http://localhost:3000","http://localhost:8080","http://localhost:5500","http://127.0.0.1:5500"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Security headers (basic)
-@app.middleware("http")
-async def security_headers(request, call_next):
-    resp = await call_next(request)
-    resp.headers.setdefault("X-Content-Type-Options","nosniff")
-    resp.headers.setdefault("X-Frame-Options","DENY")
-    resp.headers.setdefault("Referrer-Policy","strict-origin-when-cross-origin")
-    resp.headers.setdefault("X-XSS-Protection","1; mode=block")
-    # CSP is tricky in APIs; omit or tune per route as needed
-    return resp
-
-instrument(app)
-app.include_router(metrics_router)
