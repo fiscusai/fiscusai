@@ -20,7 +20,7 @@ PyJWT>=2.8.0
 python-dotenv>=1.0.1
 
 # === AI / ML ===
-torch>=2.2.2          # PyTorch (en yaygın)
+torch>=2.2.2          # PyTorch (CPU)
 torchvision>=0.17.2   # Görüntü işleme için
 torchaudio>=2.2.2     # Ses işleme için
 scikit-learn>=1.5.0
@@ -29,7 +29,7 @@ numpy>=1.26.4
 pandas>=2.2.2
 
 # === Image / Data Processing ===
-opencv-python>=4.9.0.80
+opencv-python-headless>=4.9.0.80
 Pillow>=10.3.0
 
 # === Utils ===
@@ -40,5 +40,5 @@ reportlab>=4.1.0
 lxml>=5.2.1
 pyotp>=2.9.0
 
-# === Testing ===
+# === Testing (opsiyonel; prod'da şart değil) ===
 pytest>=8.2.0
