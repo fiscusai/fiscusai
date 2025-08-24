@@ -3,11 +3,13 @@
 import os
 import pkgutil
 from importlib import import_module
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-# --- App içi RELATIVE importlar (absolute `from app...` KULLANMA) ---
+# --- App içi RELATIVE importlar ---
 from .metrics import PrometheusMiddleware, metrics, instrument, router as metrics_router
 from .security.middleware import AuthContextMiddleware
 from .security.headers import SecurityHeadersMiddleware
@@ -27,20 +29,13 @@ try:
 except Exception:
     pass
 
-# === FastAPI APP (doğru initialization) ===
-app = FastAPI(title="FISCUS AI API", version=os.getenv("APP_VERSION", "0.1.0"))
+# === Ana FastAPI (statik + /api sub-app) ===
+app = FastAPI(title="FISCUS AI", version=os.getenv("APP_VERSION", "0.1.0"))
 
-# --- Middlewares ---
-# Güvenlik başlıkları
+# --- Middlewares (ana app'e ekliyoruz; sub-app de bunlardan faydalanır) ---
 app.add_middleware(SecurityHeadersMiddleware)
-
-# Auth context
 app.add_middleware(AuthContextMiddleware)
-
-# Prometheus
 app.add_middleware(PrometheusMiddleware)
-
-# Rate limit (varsa)
 if RateLimitMiddleware:
     app.add_middleware(RateLimitMiddleware)
 
@@ -57,16 +52,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Health endpoints ---
-@app.get("/health")
+# === API için ayrı bir sub-app oluştur (tüm API /api altında) ===
+api_app = FastAPI(title="FISCUS AI API", version=os.getenv("APP_VERSION", "0.1.0"))
+
+# --- Health endpoints (/api/health, /api/live, /api/ready) ---
+@api_app.get("/health")
 def health():
     return {"ok": True}
 
-@app.get("/live")
+@api_app.get("/live")
 def live():
     return {"ok": True}
 
-@app.get("/ready")
+@api_app.get("/ready")
 def ready():
     try:
         from .utils_health import health_snapshot  # relative import
@@ -74,22 +72,20 @@ def ready():
         is_ready = (snap.get("db") == "up" and snap.get("s3") in ("up", "unknown"))
         return {"ready": is_ready, **snap}
     except Exception:
-        # utils_health yoksa en azından "up" dön
         return {"ready": True}
 
-# --- Prometheus metrics ---
-@app.get("/metrics")
+# --- Prometheus metrics (/api/metrics) ---
+@api_app.get("/metrics")
 async def metrics_route(request):
     return await metrics(request)
 
-# --- (Opsiyonel) Sentry test endpoint'i ---
-@app.get("/debug-sentry")
+# --- (Opsiyonel) Sentry test ---
+@api_app.get("/debug-sentry")
 def debug_sentry():
     raise RuntimeError("Sentry test: deliberate error")
 
-# --- Router auto-discovery: .routers altındaki tüm modülleri tara ve ekle ---
+# --- Router auto-discovery: .routers altındaki tüm modülleri /api'ye ekle ---
 def _include_all_routers():
-    # Bu dosya 'app' paketinde olduğundan __package__ -> "app"
     pkg_name = __package__ + ".routers"  # "app.routers"
     try:
         pkg = import_module(pkg_name)
@@ -104,21 +100,41 @@ def _include_all_routers():
             mod = import_module(f"{pkg_name}.{name}")
             router = getattr(mod, "router", None)
             if router is not None:
-                app.include_router(router)
+                api_app.include_router(router)  # <-- sub-app'e ekliyoruz
         except Exception:
-            # Bir router importu patlarsa uygulama yine de boot etsin
             continue
 
 _include_all_routers()
 
 # --- Metrics helper (varsa) ---
 try:
-    instrument(app)
-    app.include_router(metrics_router)
+    instrument(api_app)                # <-- sub-app'i enstrümanla
+    api_app.include_router(metrics_router)
 except Exception:
     pass
 
-# Root
-@app.get("/")
-def root():
-    return {"service": "FISCUS AI API"}
+# --- Frontend build'ini kökten servis et ---
+# Vite/React için "frontend/dist", CRA için "frontend/build"
+FRONTEND_DIR = (
+    Path(__file__).resolve().parent.parent / "frontend" / "dist"
+)
+if not FRONTEND_DIR.exists():
+    # CRA alternatifi:
+    alt = Path(__file__).resolve().parent.parent / "frontend" / "build"
+    if alt.exists():
+        FRONTEND_DIR = alt
+
+if FRONTEND_DIR.exists():
+    # html=True => SPA yönlendirmeleri index.html'e düşer
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+else:
+    # Frontend yoksa kökte kısa bir bilgi döndür
+    @app.get("/")
+    def root_info():
+        return {
+            "service": "FISCUS AI",
+            "info": f"Frontend build bulunamadı: {FRONTEND_DIR}"
+        }
+
+# --- API sub-app'i mount et ---
+app.mount("/api", api_app)
