@@ -19,8 +19,11 @@ RUN python -m pip install --upgrade pip && \
 # --- Uygulama dosyaları ---
 COPY . .
 
+# Gunicorn konfigürasyon dosyasını da kopyala
+COPY gunicorn.conf.py ./gunicorn.conf.py
+
 # import yolları için paket köklerini PYTHONPATH'e ekle
 ENV PYTHONPATH=/app:/app/FISCUS_AI_MASTER_FULL_v50_INTEGRATED_ON_v48:/app/FISCUS_AI_MASTER_FULL_v50_INTEGRATED_ON_v48/apps/api
 
-# Render PORT'u env olarak enjekte ediyor; shell expansion için sh -c kullan
-CMD ["sh","-c","gunicorn -k uvicorn.workers.UvicornWorker server:app --bind 0.0.0.0:${PORT:-8000} --log-level info"]
+# Gunicorn konfigürasyon dosyasını kullanarak çalıştır
+CMD ["sh","-c","gunicorn --config gunicorn.conf.py server:app"]
